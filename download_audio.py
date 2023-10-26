@@ -18,26 +18,34 @@ import numpy as np
 
 import argparse
 
+from tqdm import tqdm
+
 parser = argparse.ArgumentParser(description='Download raw audio files for SEP-28k or FluencyBank and convert to 16k hz mono wavs.')
 parser.add_argument('--episodes', type=str, required=True,
                    help='Path to the labels csv files (e.g., SEP-28k_episodes.csv)')
 parser.add_argument('--wavs', type=str, default="wavs",
                    help='Path where audio files from download_audio.py are saved')
+parser.add_argument('--limit', type=int, default=999999,
+		    		help='Maximum number of files to be downloaded')
+parser.add_argument('--verbose', type=int, default=0,
+		    		help='Verbose output')
 
 
 args = parser.parse_args()
 episode_uri = args.episodes
 wav_dir = args.wavs
+max_items = args.limit
+verbose = args.verbose
 
 # Load episode data
-table = np.loadtxt(episode_uri, dtype=str, delimiter=", ")
+table = np.genfromtxt(episode_uri, dtype=str, delimiter=", ")
 urls = table[:,2]
 n_items = len(urls)
 
 audio_types = [".mp3", ".m4a", ".mp4"]
 
 
-for i in range(n_items):
+for i in tqdm(range(min(n_items, max_items)), position=0, leave=True, total=min(n_items, max_items)):
 	# Get show/episode IDs
 	show_abrev = table[i,-2]
 	ep_idx = table[i,-1]
@@ -61,16 +69,23 @@ for i in range(n_items):
 	if os.path.exists(wav_path):
 		continue
 
-	print("Processing", show_abrev, ep_idx)
+	if verbose == 1:
+		print("Processing", show_abrev, ep_idx)
 	# Download raw audio file. This could be parallelized.
 	if not os.path.exists(audio_path_orig):
 		line = f"wget -O {audio_path_orig} {episode_url}"
-		process = subprocess.Popen([(line)],shell=True)
+		if verbose == 1:
+			process = subprocess.Popen([(line)],shell=True)
+		else:
+			process = subprocess.Popen([(line)],shell=True,stdout=subprocess.DEVNULL)
 		process.wait()
 
 	# Convert to 16khz mono wav file
 	line = f"ffmpeg -i {audio_path_orig} -ac 1 -ar 16000 {wav_path}"
-	process = subprocess.Popen([(line)],shell=True)
+	if verbose == 1:
+		process = subprocess.Popen([(line)],shell=True)
+	else:
+		process = subprocess.Popen([(line)],shell=True,stdout=subprocess.DEVNULL)
 	process.wait()
 
 	# Remove the original mp3/m4a file
