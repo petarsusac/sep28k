@@ -17,6 +17,8 @@ import numpy as np
 import pandas as pd
 from scipy.io import wavfile
 
+from tqdm import tqdm
+
 import argparse
 
 parser = argparse.ArgumentParser(description='Extract clips from SEP-28k or FluencyBank.')
@@ -28,11 +30,14 @@ parser.add_argument('--clips', type=str, default="clips",
                    help='Path where clips should be extracted')
 parser.add_argument("--progress", action="store_true",
                     help="Show progress")
+parser.add_argument('--limit', type=int, default=999999,
+		    		help='Max number of files to process')
 
 args = parser.parse_args()
 label_file = args.labels
 data_dir = args.wavs
 output_dir = args.clips
+max_files = args.limit
 
 
 # Load label/clip file
@@ -49,9 +54,8 @@ labels = data.iloc[:,5:].values
 n_items = len(shows)
 
 loaded_wav = ""
-cur_iter = range(n_items)
+cur_iter = range(min(n_items, max_files))
 if args.progress:
-        from tqdm import tqdm
         cur_iter = tqdm(cur_iter)
 
 for i in cur_iter:
