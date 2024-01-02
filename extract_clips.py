@@ -65,8 +65,8 @@ for i in cur_iter:
 
 	# Setup paths
 	wav_path = f"{data_dir}/{shows[i]}/{episode}.wav"
-	clip_dir = pathlib.Path(f"{output_dir}/{show_abrev}/{episode}/")
-	clip_path = f"{clip_dir}/{shows[i]}_{episode}_{clip_idx}.wav"
+	clip_dir = pathlib.Path(f"{output_dir}/{show_abrev}/{episode:03}/")
+	clip_path = f"{clip_dir}/{shows[i]}_{episode:03}_{clip_idx}.wav"
 
 	if not os.path.exists(wav_path):
 		print("Missing", wav_path)
